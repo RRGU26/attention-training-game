@@ -4,7 +4,7 @@ A comprehensive web-based cognitive training application designed to improve sus
 
 ## 🎯 **Live Demo**
 
-**[Play Now](https://yourusername.github.io/attention-training-game/)** *(Update with your GitHub username)*
+**[Play Now](https://RRGU26.github.io/attention-training-game/)**
 
 ## 📋 **Project Summary**
 
@@ -143,7 +143,7 @@ Score = (Accuracy × 100 + TimeBonus) × StreakMultiplier
 
 ### **Option 3: Local Development**
 ```bash
-git clone https://github.com/yourusername/attention-training-game.git
+git clone https://github.com/RRGU26/attention-training-game.git
 cd attention-training-game
 # Open index.html in browser or serve with local server
 python -m http.server 8000  # Python 3
