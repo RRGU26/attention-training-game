@@ -1,0 +1,2744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attention Training Game</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            color: #333;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Screen Management */
+        .screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 40px 20px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .screen.hidden {
+            display: none;
+        }
+
+        /* Start Screen */
+        #startScreen {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            margin: auto;
+            max-height: none;
+            overflow-y: auto;
+        }
+
+        #startScreen h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #4a47a3;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #startScreen p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .level-selector {
+            margin: 30px 0;
+        }
+
+        .level-selector h3 {
+            margin-bottom: 15px;
+            color: #4a47a3;
+        }
+
+        .level-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .level-btn {
+            padding: 10px 20px;
+            border: 2px solid #4a47a3;
+            background: white;
+            color: #4a47a3;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .level-btn:hover {
+            background: #4a47a3;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .level-btn.selected {
+            background: #4a47a3;
+            color: white;
+        }
+
+        .level-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f0f0f0;
+            color: #999;
+            border-color: #ccc;
+        }
+
+        .mode-selector {
+            margin: 30px 0;
+        }
+
+        .mode-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .mode-btn {
+            padding: 20px;
+            border: 2px solid #4a47a3;
+            background: white;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .mode-btn:hover {
+            background: #f8f9ff;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-btn.selected {
+            background: #4a47a3;
+            color: white;
+        }
+
+        .mode-btn h4 {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .mode-btn p {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .start-game-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            margin-top: 20px;
+        }
+
+        .start-game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .start-game-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Game Container */
+        #gameContainer {
+            width: 900px;
+            max-width: 95vw;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: visible;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            min-height: auto;
+        }
+
+        /* Game Header */
+        #gameHeader {
+            background: linear-gradient(45deg, #4a47a3, #6a67ce);
+            color: white;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        /* Game Area */
+        #gameArea {
+            min-height: 400px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        /* Game Controls */
+        #gameControls {
+            padding: 20px;
+            background: #f8f9ff;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            padding: 12px 25px;
+            border: 2px solid #4a47a3;
+            background: white;
+            color: #4a47a3;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .control-btn:hover {
+            background: #4a47a3;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Memory Game Specific */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            max-width: 400px;
+        }
+
+        .memory-button {
+            width: 80px;
+            height: 80px;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .memory-button:hover {
+            transform: scale(1.05);
+            border-color: #4a47a3;
+        }
+
+        .memory-button.active {
+            transform: scale(1.1);
+            border-width: 4px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .memory-button.selected {
+            border-color: #4a47a3;
+            background: rgba(74, 71, 163, 0.2);
+        }
+
+        /* Color classes for memory buttons */
+        .color-red { background-color: #ff6b6b; }
+        .color-blue { background-color: #4ecdc4; }
+        .color-green { background-color: #45b7d1; }
+        .color-yellow { background-color: #f9ca24; }
+        .color-purple { background-color: #a55eea; }
+        .color-orange { background-color: #fd9644; }
+
+        /* Speed Reading */
+        .reading-area {
+            max-width: 600px;
+            text-align: justify;
+            line-height: 1.6;
+            font-size: 1.1em;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .question-container {
+            margin: 20px 0;
+            text-align: left;
+            max-width: 600px;
+        }
+
+        .question {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option:hover {
+            border-color: #4a47a3;
+            background: #f8f9ff;
+        }
+
+        .option.selected {
+            border-color: #4a47a3;
+            background: #4a47a3;
+            color: white;
+        }
+
+        /* Math Game */
+        .math-problem {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            color: #4a47a3;
+        }
+
+        .math-input {
+            padding: 15px;
+            font-size: 1.5em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 200px;
+            margin: 20px 0;
+        }
+
+        .math-input:focus {
+            outline: none;
+            border-color: #4a47a3;
+            box-shadow: 0 0 10px rgba(74, 71, 163, 0.3);
+        }
+
+        /* Pattern Recognition */
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 320px;
+        }
+
+        .pattern-cell {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .pattern-cell.missing {
+            background: #f0f0f0;
+            border-style: dashed;
+        }
+
+        .pattern-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .pattern-option {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            transition: all 0.3s ease;
+        }
+
+        .pattern-option:hover {
+            border-color: #4a47a3;
+            transform: scale(1.1);
+        }
+
+        .pattern-option.selected {
+            border-color: #4a47a3;
+            background: rgba(74, 71, 163, 0.2);
+        }
+
+        /* Focus Game */
+        .focus-arena {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            border: 3px solid #4a47a3;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 20px 0;
+        }
+
+        .focus-object {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .focus-object.target {
+            background: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .focus-object.distractor {
+            background: #f44336;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+        }
+
+        .focus-object:hover {
+            transform: scale(1.1);
+        }
+
+        /* Instruction Area */
+        .instruction-area {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e8f0fe;
+            border-radius: 10px;
+            border-left: 4px solid #4a47a3;
+        }
+
+        .instruction-area h3 {
+            color: #4a47a3;
+            margin-bottom: 10px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 1em;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(45deg, #4a47a3, #6a67ce);
+            color: white;
+            box-shadow: 0 4px 15px rgba(74, 71, 163, 0.3);
+        }
+
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 71, 163, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .action-btn.secondary:hover {
+            background: #e0e0e0;
+            border-color: #bbb;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Feedback Animations */
+        .correct-feedback {
+            background-color: #4CAF50 !important;
+            animation: pulse 0.6s ease-in-out;
+        }
+
+        .incorrect-feedback {
+            background-color: #f44336 !important;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .streak-bonus {
+            animation: glow 0.8s ease-in-out;
+            box-shadow: 0 0 20px #FFD700 !important;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #FFD700; }
+            50% { box-shadow: 0 0 25px #FFD700; }
+            100% { box-shadow: 0 0 5px #FFD700; }
+        }
+
+        /* Pause and Completion Screens */
+        #pauseScreen, #completionScreen {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            margin: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+        }
+
+        #pauseScreen h2, #completionScreen h2 {
+            color: #4a47a3;
+            margin-bottom: 20px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .result-item {
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4a47a3;
+            margin-bottom: 5px;
+        }
+
+        .result-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* Progress Indicators */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a47a3, #6a67ce);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1023px) {
+            #gameContainer {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .memory-grid {
+                max-width: 350px;
+            }
+            
+            .memory-button {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .focus-arena {
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .screen {
+                padding: 20px 10px;
+                min-height: auto;
+            }
+            
+            #gameContainer {
+                width: 100%;
+                padding: 0;
+                margin: 0 auto;
+            }
+            
+            #gameHeader {
+                padding: 15px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stat-item {
+                padding: 8px;
+            }
+            
+            .stat-value {
+                font-size: 1.1em;
+            }
+            
+            #gameArea {
+                padding: 20px;
+                min-height: 300px;
+            }
+            
+            .memory-button {
+                width: 60px;
+                height: 60px;
+                font-size: 1em;
+            }
+            
+            .memory-grid {
+                max-width: 300px;
+                gap: 10px;
+            }
+            
+            .action-btn {
+                min-height: 50px;
+                font-size: 16px;
+                padding: 15px 20px;
+            }
+            
+            .math-problem {
+                font-size: 1.5em;
+            }
+            
+            .math-input {
+                font-size: 1.2em;
+                padding: 12px;
+            }
+            
+            .focus-arena {
+                height: 250px;
+            }
+            
+            .focus-object {
+                font-size: 0.9em;
+            }
+            
+            .reading-area {
+                font-size: 1em;
+                padding: 15px;
+            }
+            
+            .pattern-cell, .pattern-option {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2em;
+            }
+            
+            .pattern-grid {
+                max-width: 260px;
+            }
+            
+            #startScreen {
+                padding: 20px;
+                margin: 0;
+                max-width: none;
+                border-radius: 0;
+            }
+            
+            #startScreen h1 {
+                font-size: 2em;
+            }
+            
+            .mode-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .level-buttons {
+                justify-content: center;
+            }
+            
+            .level-btn {
+                min-width: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-btn {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+
+        /* Accessibility Features */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus,
+        .memory-button:focus,
+        .option:focus,
+        .pattern-option:focus,
+        .level-btn:focus,
+        .mode-btn:focus {
+            outline: 3px solid #4a47a3;
+            outline-offset: 2px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .memory-button,
+            .option,
+            .pattern-option {
+                border-width: 3px;
+            }
+            
+            .focus-object.target {
+                border: 3px solid #000;
+            }
+            
+            .focus-object.distractor {
+                border: 3px solid #fff;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen">
+        <h1>🧠 Attention Training Game</h1>
+        <p>Progressive cognitive training to improve sustained attention and focus over longer periods.</p>
+        
+        <div class="level-selector">
+            <h3>Select Starting Level:</h3>
+            <div class="level-buttons" id="levelButtons">
+                <!-- Levels will be generated by JavaScript -->
+            </div>
+            <p><small>Higher levels require longer session times and increased difficulty.</small></p>
+        </div>
+
+        <div class="mode-selector">
+            <h3>Choose Training Mode:</h3>
+            <div class="mode-buttons">
+                <div class="mode-btn" data-mode="memory">
+                    <h4>🔴 Memory Sequence</h4>
+                    <p>Remember and repeat color patterns</p>
+                </div>
+                <div class="mode-btn" data-mode="speed">
+                    <h4>📖 Speed Reading</h4>
+                    <p>Read passages and answer questions</p>
+                </div>
+                <div class="mode-btn" data-mode="math">
+                    <h4>🔢 Mental Math</h4>
+                    <p>Solve progressive math problems</p>
+                </div>
+                <div class="mode-btn" data-mode="pattern">
+                    <h4>🧩 Pattern Recognition</h4>
+                    <p>Complete visual pattern sequences</p>
+                </div>
+                <div class="mode-btn" data-mode="focus">
+                    <h4>🎯 Sustained Focus</h4>
+                    <p>Track targets while ignoring distractors</p>
+                </div>
+            </div>
+        </div>
+
+        <button class="start-game-btn" id="startGameBtn" disabled>Start Training Session</button>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameContainer" class="screen hidden">
+        <header id="gameHeader">
+            <div class="stat-item">
+                <div class="stat-label">Level</div>
+                <div class="stat-value" id="currentLevel">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Time</div>
+                <div class="stat-value" id="timeRemaining">2:00</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="currentScore">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Streak</div>
+                <div class="stat-value" id="currentStreak">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Accuracy</div>
+                <div class="stat-value" id="currentAccuracy">100%</div>
+            </div>
+        </header>
+        
+        <main id="gameArea">
+            <!-- Dynamic content based on game mode -->
+        </main>
+        
+        <footer id="gameControls">
+            <button class="control-btn" id="pauseBtn" tabindex="0">⏸️ Pause</button>
+            <button class="control-btn" id="helpBtn" tabindex="0">❓ Help</button>
+        </footer>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pauseScreen" class="screen hidden">
+        <h2>⏸️ Game Paused</h2>
+        <p>Take a moment to rest if needed. Your progress is saved.</p>
+        
+        <div class="action-buttons">
+            <button class="action-btn primary" id="resumeBtn">▶️ Resume</button>
+            <button class="action-btn secondary" id="quitBtn">🏠 Quit to Menu</button>
+        </div>
+    </div>
+
+    <!-- Completion Screen -->
+    <div id="completionScreen" class="screen hidden">
+        <h2 id="completionTitle">🎉 Session Complete!</h2>
+        <p id="completionMessage">Great job on completing your attention training session!</p>
+        
+        <div class="results-grid" id="resultsGrid">
+            <!-- Results will be populated by JavaScript -->
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p><small id="progressText">Level Progress</small></p>
+        
+        <div class="action-buttons">
+            <button class="action-btn primary" id="nextLevelBtn">➡️ Next Level</button>
+            <button class="action-btn primary" id="playAgainBtn">🔄 Play Again</button>
+            <button class="action-btn secondary" id="backToMenuBtn">🏠 Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Accessibility Live Region for Screen Readers -->
+    <div id="ariaLive" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+    <div id="ariaAlert" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
+
+    <script>
+        // Core Game State Management
+        const gameState = {
+            currentLevel: 1,
+            currentGameMode: 'memory',
+            sessionDuration: 120, // seconds
+            timeRemaining: 120,
+            isActive: false,
+            isPaused: false,
+            score: 0,
+            streak: 0,
+            accuracy: 100,
+            totalAttempts: 0,
+            correctAnswers: 0,
+            currentQuestion: 0,
+            gameData: null,
+            userResponses: [],
+            startTime: null,
+            endTime: null,
+            attentionLapses: 0,
+            lastInteractionTime: null,
+            unlockedLevels: [1], // Start with level 1 unlocked
+            currentSequence: [],
+            userSequence: [],
+            sequenceIndex: 0,
+            isShowingSequence: false,
+            focusObjects: [],
+            animationId: null,
+            currentProblem: null,
+            currentPattern: null,
+            responseStartTime: null
+        };
+
+        // Session Timer Class
+        class SessionTimer {
+            constructor(duration, onTick, onComplete) {
+                this.duration = duration;
+                this.remaining = duration;
+                this.onTick = onTick;
+                this.onComplete = onComplete;
+                this.intervalId = null;
+                this.isPaused = false;
+            }
+            
+            start() {
+                if (!this.intervalId && !this.isPaused) {
+                    this.intervalId = setInterval(() => {
+                        this.remaining--;
+                        this.onTick(this.remaining);
+                        if (this.remaining <= 0) {
+                            this.complete();
+                        }
+                    }, 1000);
+                }
+            }
+            
+            pause() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                    this.isPaused = true;
+                }
+            }
+            
+            resume() {
+                if (this.isPaused) {
+                    this.isPaused = false;
+                    this.start();
+                }
+            }
+            
+            complete() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                }
+                this.onComplete();
+            }
+            
+            reset(newDuration) {
+                this.pause();
+                this.duration = newDuration;
+                this.remaining = newDuration;
+                this.isPaused = false;
+            }
+        }
+
+        // Game timer instance
+        let sessionTimer = null;
+
+        // Speed Reading Text Data
+        const speedReadingTexts = [
+            // Level 1-3: 75-word passages
+            {
+                level: 1,
+                text: "The morning sun cast long shadows across the quiet park. Birds chirped softly in the tall oak trees while joggers followed the winding path. A gentle breeze rustled the leaves, creating a peaceful atmosphere. Children played on the colorful playground equipment nearby. The fresh morning air filled visitors' lungs as they enjoyed nature's beauty in the heart of the busy city.",
+                questions: [
+                    { question: "What time of day is described in the passage?", options: ["Evening", "Morning", "Afternoon", "Night"], correct: 1 },
+                    { question: "What were the children doing?", options: ["Jogging", "Reading", "Playing on playground", "Feeding birds"], correct: 2 }
+                ]
+            },
+            {
+                level: 2,
+                text: "Technology has transformed how we communicate with others around the world. Social media platforms connect people instantly across vast distances. Video calls allow face-to-face conversations between continents. However, some experts worry that digital communication might reduce meaningful personal connections. Despite concerns, technology continues to evolve rapidly, offering new ways to share ideas and experiences with friends and family members everywhere.",
+                questions: [
+                    { question: "What is the main topic discussed?", options: ["Travel", "Technology and communication", "Social problems", "Family relationships"], correct: 1 },
+                    { question: "What concern do experts have?", options: ["Cost of technology", "Reduced personal connections", "Privacy issues", "Speed of internet"], correct: 1 }
+                ]
+            },
+            {
+                level: 3,
+                text: "Regular exercise provides numerous benefits for both physical and mental health. Physical activity strengthens muscles, improves cardiovascular health, and helps maintain healthy weight. Exercise also releases endorphins, natural chemicals that enhance mood and reduce stress levels. Studies show that people who exercise regularly sleep better, have more energy, and experience fewer symptoms of anxiety and depression. Even moderate exercise can make significant improvements.",
+                questions: [
+                    { question: "What chemicals does exercise release?", options: ["Adrenaline", "Insulin", "Endorphins", "Caffeine"], correct: 2 },
+                    { question: "How does exercise affect sleep?", options: ["Makes it worse", "No effect", "Improves sleep quality", "Causes insomnia"], correct: 2 }
+                ]
+            },
+            // Level 4-6: 150-word passages
+            {
+                level: 4,
+                text: "Climate change represents one of the most pressing challenges facing our planet today. Rising global temperatures are causing ice caps to melt, sea levels to rise, and weather patterns to become increasingly unpredictable. Scientists around the world are working together to understand these complex changes and develop solutions. Renewable energy sources like solar and wind power offer promising alternatives to fossil fuels. Governments are implementing policies to reduce carbon emissions and promote sustainable practices. Individual actions also matter significantly. Simple changes like using energy-efficient appliances, reducing car travel, and supporting environmentally conscious businesses can contribute to positive change. Education plays a crucial role in raising awareness about environmental issues. When people understand the impacts of their choices, they are more likely to make decisions that benefit the planet. The next decade will be critical for implementing meaningful changes that can help preserve Earth's climate for future generations.",
+                questions: [
+                    { question: "What are scientists working to develop?", options: ["New weather patterns", "Solutions to climate change", "More fossil fuels", "Larger ice caps"], correct: 1 },
+                    { question: "What role does education play?", options: ["Reduces emissions", "Raises environmental awareness", "Controls weather", "Melts ice caps"], correct: 1 },
+                    { question: "Why is the next decade important?", options: ["Weather will improve", "Critical for implementing changes", "Ice will refreeze", "Cars will disappear"], correct: 1 }
+                ]
+            },
+            {
+                level: 5,
+                text: "The human brain is an incredibly complex organ that controls every aspect of our daily lives. Containing approximately 86 billion neurons, the brain processes information at remarkable speeds. Different regions specialize in specific functions: the frontal lobe handles decision-making and planning, while the temporal lobe manages memory and language processing. Neuroplasticity, the brain's ability to reorganize and form new connections, allows us to learn throughout our lives. This remarkable feature means that practicing new skills literally changes brain structure. Research shows that learning a musical instrument, speaking multiple languages, or engaging in regular mental exercise can improve cognitive function and potentially delay age-related decline. Sleep plays a vital role in brain health, allowing the removal of toxins and consolidation of memories. Nutrition also affects brain performance, with omega-3 fatty acids, antioxidants, and complex carbohydrates supporting optimal function. Understanding how the brain works helps us make better choices for lifelong mental health and cognitive performance.",
+                questions: [
+                    { question: "Approximately how many neurons does the brain contain?", options: ["86 million", "86 billion", "86 thousand", "86 trillion"], correct: 1 },
+                    { question: "What is neuroplasticity?", options: ["Brain surgery", "Memory loss", "Brain's ability to reorganize", "Sleep patterns"], correct: 2 },
+                    { question: "Which nutrients support brain function?", options: ["Sugar only", "Omega-3 fatty acids", "Caffeine", "Artificial sweeteners"], correct: 1 }
+                ]
+            },
+            {
+                level: 6,
+                text: "Space exploration has captivated human imagination for centuries, driving technological advancement and scientific discovery. The International Space Station serves as a remarkable example of international cooperation, with astronauts from multiple countries conducting experiments in microgravity. These studies provide insights impossible to obtain on Earth, advancing our understanding of physics, biology, and medicine. Recent missions to Mars have revealed evidence of ancient water flows, suggesting the planet may have once supported life. Private companies are now joining government agencies in space exploration, developing reusable rockets that dramatically reduce launch costs. This commercialization of space technology opens new possibilities for research, communication, and even tourism. Future missions plan to return humans to the Moon and eventually send crews to Mars. These ambitious goals require solving complex challenges including radiation protection, life support systems, and psychological effects of long-duration spaceflight. As we push the boundaries of human exploration, space technology continues to benefit life on Earth through improved weather forecasting, GPS navigation, and satellite communications.",
+                questions: [
+                    { question: "What does the International Space Station demonstrate?", options: ["Competition between nations", "International cooperation", "Space tourism", "Military power"], correct: 1 },
+                    { question: "What have Mars missions discovered?", options: ["Current life forms", "Evidence of ancient water", "Oxygen atmosphere", "Alien technology"], correct: 1 },
+                    { question: "How do reusable rockets help space exploration?", options: ["Increase speed", "Reduce launch costs", "Improve safety", "Create jobs"], correct: 1 }
+                ]
+            }
+        ];
+
+        // Level Configuration
+        const levelConfig = {
+            getDuration: (level) => {
+                if (level <= 3) return 120;      // 2 minutes
+                if (level <= 6) return 180;      // 3 minutes  
+                if (level <= 9) return 300;      // 5 minutes
+                if (level <= 12) return 420;     // 7 minutes
+                if (level <= 15) return 600;     // 10 minutes
+                return 720;                      // 12+ minutes
+            },
+            
+            getMemorySequenceLength: (level) => {
+                return Math.min(3 + Math.floor((level - 1) / 2), 9);
+            },
+            
+            getMathComplexity: (level) => {
+                if (level <= 3) return 'simple';      // Single operations
+                if (level <= 6) return 'medium';      // Two operations
+                if (level <= 9) return 'complex';     // Three operations with parentheses
+                return 'advanced';                     // Multi-step problems
+            },
+            
+            getFocusDifficulty: (level) => {
+                return {
+                    targetCount: Math.min(1 + Math.floor(level / 3), 4),
+                    distractorCount: Math.min(2 + Math.floor(level / 2), 8),
+                    speed: Math.min(1 + (level * 0.2), 4)
+                };
+            }
+        };
+
+        // Initialize the game
+        function initializeGame() {
+            setupEventListeners();
+            generateLevelButtons();
+            updateGameStats();
+            
+            // Set initial focus for accessibility
+            document.getElementById('startScreen').focus();
+            
+            // Initialize user interaction tracking
+            trackUserEngagement();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Start screen
+            document.getElementById('startGameBtn').addEventListener('click', startGameSession);
+            
+            // Level selection
+            document.getElementById('levelButtons').addEventListener('click', handleLevelSelection);
+            
+            // Mode selection
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', handleModeSelection);
+            });
+            
+            // Game controls
+            document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+            document.getElementById('helpBtn').addEventListener('click', showHelp);
+            
+            // Pause screen
+            document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+            document.getElementById('quitBtn').addEventListener('click', quitToMenu);
+            
+            // Completion screen
+            document.getElementById('nextLevelBtn').addEventListener('click', startNextLevel);
+            document.getElementById('playAgainBtn').addEventListener('click', playAgain);
+            document.getElementById('backToMenuBtn').addEventListener('click', backToMenu);
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', handleKeyboardNavigation);
+            
+            // Tab visibility for attention tracking
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+        }
+
+        // Generate level selection buttons
+        function generateLevelButtons() {
+            const levelButtonsContainer = document.getElementById('levelButtons');
+            levelButtonsContainer.innerHTML = '';
+            
+            for (let i = 1; i <= 20; i++) {
+                const button = document.createElement('button');
+                button.className = 'level-btn';
+                button.textContent = i;
+                button.dataset.level = i;
+                
+                // Disable locked levels
+                if (!gameState.unlockedLevels.includes(i)) {
+                    button.disabled = true;
+                    button.title = 'Complete previous levels to unlock';
+                }
+                
+                // Highlight current level
+                if (i === gameState.currentLevel) {
+                    button.classList.add('selected');
+                }
+                
+                levelButtonsContainer.appendChild(button);
+            }
+        }
+
+        // Handle level selection
+        function handleLevelSelection(event) {
+            if (event.target.classList.contains('level-btn') && !event.target.disabled) {
+                // Remove previous selection
+                document.querySelectorAll('.level-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                // Select new level
+                event.target.classList.add('selected');
+                gameState.currentLevel = parseInt(event.target.dataset.level);
+                updateSessionDuration();
+                updateStartButton();
+                
+                // Announce to screen readers
+                announceToScreenReader(`Level ${gameState.currentLevel} selected. Session duration: ${formatTime(gameState.sessionDuration)}`);
+            }
+        }
+
+        // Handle mode selection
+        function handleModeSelection(event) {
+            const modeBtn = event.currentTarget;
+            
+            // Remove previous selection
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Select new mode
+            modeBtn.classList.add('selected');
+            gameState.currentGameMode = modeBtn.dataset.mode;
+            updateStartButton();
+            
+            // Announce to screen readers
+            const modeName = modeBtn.querySelector('h4').textContent;
+            announceToScreenReader(`${modeName} mode selected`);
+        }
+
+        // Update session duration based on level
+        function updateSessionDuration() {
+            gameState.sessionDuration = levelConfig.getDuration(gameState.currentLevel);
+            gameState.timeRemaining = gameState.sessionDuration;
+        }
+
+        // Update start button state
+        function updateStartButton() {
+            const startBtn = document.getElementById('startGameBtn');
+            const hasLevel = gameState.currentLevel > 0;
+            const hasMode = gameState.currentGameMode !== '';
+            
+            startBtn.disabled = !(hasLevel && hasMode);
+            
+            if (!startBtn.disabled) {
+                const duration = formatTime(gameState.sessionDuration);
+                startBtn.textContent = `Start ${duration} Session`;
+            }
+        }
+
+        // Start game session
+        function startGameSession() {
+            gameState.isActive = true;
+            gameState.isPaused = false;
+            gameState.score = 0;
+            gameState.streak = 0;
+            gameState.accuracy = 100;
+            gameState.totalAttempts = 0;
+            gameState.correctAnswers = 0;
+            gameState.currentQuestion = 0;
+            gameState.attentionLapses = 0;
+            gameState.userResponses = [];
+            gameState.startTime = Date.now();
+            gameState.lastInteractionTime = Date.now();
+            
+            // Reset timer
+            gameState.timeRemaining = gameState.sessionDuration;
+            
+            // Switch to game screen
+            showScreen('gameContainer');
+            
+            // Start session timer
+            sessionTimer = new SessionTimer(
+                gameState.sessionDuration,
+                updateTimeDisplay,
+                completeSession
+            );
+            sessionTimer.start();
+            
+            // Initialize game mode
+            initializeGameMode();
+            
+            // Update display
+            updateGameStats();
+            
+            // Announce start
+            announceToScreenReader(`${gameState.currentGameMode} training session started. Level ${gameState.currentLevel}. Duration: ${formatTime(gameState.sessionDuration)}`);
+        }
+
+        // Initialize specific game mode
+        function initializeGameMode() {
+            const gameArea = document.getElementById('gameArea');
+            
+            switch (gameState.currentGameMode) {
+                case 'memory':
+                    initializeMemoryMode();
+                    break;
+                case 'speed':
+                    initializeSpeedReadingMode();
+                    break;
+                case 'math':
+                    initializeMathMode();
+                    break;
+                case 'pattern':
+                    initializePatternMode();
+                    break;
+                case 'focus':
+                    initializeFocusMode();
+                    break;
+            }
+        }
+
+        // Memory Sequence Mode
+        function initializeMemoryMode() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <div class="instruction-area">
+                    <h3>Memory Sequence Training</h3>
+                    <p>Watch the sequence of colors, then repeat it in the same order.</p>
+                </div>
+                
+                <div class="memory-grid" id="memoryGrid">
+                    <button class="memory-button color-red" data-color="red" aria-label="Red button"></button>
+                    <button class="memory-button color-blue" data-color="blue" aria-label="Blue button"></button>
+                    <button class="memory-button color-green" data-color="green" aria-label="Green button"></button>
+                    <button class="memory-button color-yellow" data-color="yellow" aria-label="Yellow button"></button>
+                    <button class="memory-button color-purple" data-color="purple" aria-label="Purple button"></button>
+                    <button class="memory-button color-orange" data-color="orange" aria-label="Orange button"></button>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="startSequenceBtn">Start Sequence</button>
+                    <button class="action-btn secondary" id="submitSequenceBtn" disabled>Submit Answer</button>
+                </div>
+                
+                <div id="sequenceProgress"></div>
+            `;
+            
+            // Add event listeners
+            document.getElementById('startSequenceBtn').addEventListener('click', startMemorySequence);
+            document.getElementById('submitSequenceBtn').addEventListener('click', submitMemorySequence);
+            
+            document.querySelectorAll('.memory-button').forEach(btn => {
+                btn.addEventListener('click', handleMemoryButtonClick);
+            });
+            
+            // Generate first sequence
+            generateNextMemorySequence();
+        }
+
+        function generateMemorySequence(length) {
+            const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+            const sequence = [];
+            
+            for (let i = 0; i < length; i++) {
+                sequence.push(colors[Math.floor(Math.random() * colors.length)]);
+            }
+            
+            return sequence;
+        }
+
+        function generateNextMemorySequence() {
+            const length = levelConfig.getMemorySequenceLength(gameState.currentLevel);
+            gameState.currentSequence = generateMemorySequence(length);
+            gameState.userSequence = [];
+            gameState.sequenceIndex = 0;
+            
+            document.getElementById('startSequenceBtn').disabled = false;
+            document.getElementById('submitSequenceBtn').disabled = true;
+            
+            // Reset button states
+            document.querySelectorAll('.memory-button').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.disabled = true;
+            });
+            
+            updateSequenceProgress();
+        }
+
+        function startMemorySequence() {
+            gameState.isShowingSequence = true;
+            gameState.responseStartTime = Date.now();
+            
+            document.getElementById('startSequenceBtn').disabled = true;
+            
+            // Disable buttons during sequence display
+            document.querySelectorAll('.memory-button').forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            // Show sequence with delays
+            displaySequence(gameState.currentSequence);
+        }
+
+        function displaySequence(sequence) {
+            let index = 0;
+            
+            function showNext() {
+                if (index < sequence.length) {
+                    const color = sequence[index];
+                    const button = document.querySelector(`[data-color="${color}"]`);
+                    
+                    // Highlight button
+                    button.classList.add('active');
+                    
+                    // Announce to screen readers
+                    announceToScreenReader(`${color}`);
+                    
+                    setTimeout(() => {
+                        button.classList.remove('active');
+                        index++;
+                        
+                        if (index < sequence.length) {
+                            setTimeout(showNext, 200); // Brief pause between items
+                        } else {
+                            // Sequence complete, enable input
+                            enableSequenceInput();
+                        }
+                    }, 600); // Each item shows for 600ms
+                } else {
+                    enableSequenceInput();
+                }
+            }
+            
+            showNext();
+        }
+
+        function enableSequenceInput() {
+            gameState.isShowingSequence = false;
+            
+            // Enable memory buttons
+            document.querySelectorAll('.memory-button').forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            announceToScreenReader(`Sequence complete. Now repeat the sequence by clicking the buttons in order.`);
+        }
+
+        function handleMemoryButtonClick(event) {
+            if (gameState.isShowingSequence) return;
+            
+            const color = event.target.dataset.color;
+            gameState.userSequence.push(color);
+            
+            // Visual feedback
+            event.target.classList.add('selected');
+            
+            // Enable submit if sequence is complete
+            if (gameState.userSequence.length === gameState.currentSequence.length) {
+                document.getElementById('submitSequenceBtn').disabled = false;
+                announceToScreenReader(`Sequence complete. Click Submit Answer to check your response.`);
+            }
+            
+            updateSequenceProgress();
+        }
+
+        function submitMemorySequence() {
+            const responseTime = Date.now() - gameState.responseStartTime;
+            const accuracy = validateSequenceInput(gameState.userSequence, gameState.currentSequence);
+            
+            gameState.totalAttempts++;
+            if (accuracy === 100) {
+                gameState.correctAnswers++;
+                gameState.streak++;
+            } else {
+                gameState.streak = 0;
+            }
+            
+            updateAccuracy();
+            
+            // Calculate and add score
+            const points = calculateScore(accuracy, responseTime / 1000, gameState.streak);
+            gameState.score += points;
+            
+            // Show feedback
+            showMemoryFeedback(accuracy === 100, points);
+            
+            // Update display
+            updateGameStats();
+            
+            // Track interaction
+            gameState.lastInteractionTime = Date.now();
+            
+            // Generate next sequence after brief delay
+            setTimeout(() => {
+                if (gameState.isActive && !gameState.isPaused) {
+                    generateNextMemorySequence();
+                }
+            }, 2000);
+        }
+
+        function validateSequenceInput(userInput, correctSequence) {
+            if (userInput.length !== correctSequence.length) return 0;
+            
+            let correct = 0;
+            for (let i = 0; i < correctSequence.length; i++) {
+                if (userInput[i] === correctSequence[i]) {
+                    correct++;
+                }
+            }
+            
+            return Math.round((correct / correctSequence.length) * 100);
+        }
+
+        function showMemoryFeedback(isCorrect, points) {
+            const buttons = document.querySelectorAll('.memory-button.selected');
+            const className = isCorrect ? 'correct-feedback' : 'incorrect-feedback';
+            
+            buttons.forEach(btn => {
+                btn.classList.add(className);
+                setTimeout(() => {
+                    btn.classList.remove(className, 'selected');
+                }, 1000);
+            });
+            
+            // Show points
+            if (points > 0) {
+                showPointsAnimation(points);
+            }
+            
+            // Announce result
+            const message = isCorrect ? 
+                `Correct! You earned ${points} points.` : 
+                `Incorrect sequence. The correct order was ${gameState.currentSequence.join(', ')}.`;
+            announceToScreenReader(message);
+        }
+
+        function updateSequenceProgress() {
+            const progressDiv = document.getElementById('sequenceProgress');
+            const current = gameState.userSequence.length;
+            const total = gameState.currentSequence.length;
+            
+            progressDiv.innerHTML = `
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${(current / total) * 100}%"></div>
+                </div>
+                <p>Progress: ${current}/${total}</p>
+            `;
+        }
+
+        // Speed Reading Mode
+        function initializeSpeedReadingMode() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <div class="instruction-area">
+                    <h3>Speed Reading Training</h3>
+                    <p>Read the passage carefully, then answer the comprehension questions.</p>
+                </div>
+                
+                <div id="readingContent">
+                    <!-- Content will be populated dynamically -->
+                </div>
+            `;
+            
+            generateNextReadingChallenge();
+        }
+
+        function generateNextReadingChallenge() {
+            const availableTexts = speedReadingTexts.filter(text => 
+                text.level <= gameState.currentLevel
+            );
+            
+            if (availableTexts.length === 0) {
+                // Use highest level text if none match
+                gameState.gameData = speedReadingTexts[speedReadingTexts.length - 1];
+            } else {
+                gameState.gameData = availableTexts[Math.floor(Math.random() * availableTexts.length)];
+            }
+            
+            gameState.currentQuestion = 0;
+            gameState.responseStartTime = Date.now();
+            
+            displayTextWithTimer(gameState.gameData.text, calculateReadingTime(gameState.gameData.text));
+        }
+
+        function calculateReadingTime(text) {
+            const words = text.split(' ').length;
+            const baseWPM = 200; // Words per minute for average reader
+            const difficultyMultiplier = 1 + (gameState.currentLevel * 0.1); // More time for higher levels
+            
+            return Math.max(15, Math.round((words / baseWPM) * 60 * difficultyMultiplier));
+        }
+
+        function displayTextWithTimer(text, readingTime) {
+            const readingContent = document.getElementById('readingContent');
+            
+            readingContent.innerHTML = `
+                <div class="reading-area">
+                    <div class="reading-timer">
+                        <span id="readingTimeRemaining">${readingTime}</span> seconds remaining
+                    </div>
+                    <div id="textContent">${text}</div>
+                </div>
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="finishReadingBtn">Finished Reading</button>
+                </div>
+            `;
+            
+            let timeLeft = readingTime;
+            const timerDisplay = document.getElementById('readingTimeRemaining');
+            
+            const readingTimer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(readingTimer);
+                    showQuestions();
+                }
+            }, 1000);
+            
+            document.getElementById('finishReadingBtn').addEventListener('click', () => {
+                clearInterval(readingTimer);
+                showQuestions();
+            });
+        }
+
+        function showQuestions() {
+            const readingContent = document.getElementById('readingContent');
+            const questions = gameState.gameData.questions;
+            
+            readingContent.innerHTML = `
+                <div class="question-container">
+                    <div id="questionArea">
+                        <!-- Questions will be populated here -->
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn primary" id="submitReadingBtn" disabled>Submit Answers</button>
+                    </div>
+                </div>
+            `;
+            
+            gameState.userResponses = new Array(questions.length).fill(-1);
+            displayQuestions(questions);
+            
+            document.getElementById('submitReadingBtn').addEventListener('click', submitReadingAnswers);
+        }
+
+        function displayQuestions(questions) {
+            const questionArea = document.getElementById('questionArea');
+            
+            questionArea.innerHTML = questions.map((q, index) => `
+                <div class="question-item" data-question="${index}">
+                    <div class="question">${index + 1}. ${q.question}</div>
+                    <div class="options">
+                        ${q.options.map((option, optIndex) => `
+                            <div class="option" data-question="${index}" data-option="${optIndex}">
+                                ${String.fromCharCode(65 + optIndex)}. ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add click listeners to options
+            document.querySelectorAll('.option').forEach(option => {
+                option.addEventListener('click', handleOptionClick);
+            });
+        }
+
+        function handleOptionClick(event) {
+            const questionIndex = parseInt(event.target.dataset.question);
+            const optionIndex = parseInt(event.target.dataset.option);
+            
+            // Remove previous selection for this question
+            document.querySelectorAll(`[data-question="${questionIndex}"]`).forEach(el => {
+                if (el.classList.contains('option')) {
+                    el.classList.remove('selected');
+                }
+            });
+            
+            // Select new option
+            event.target.classList.add('selected');
+            gameState.userResponses[questionIndex] = optionIndex;
+            
+            // Check if all questions are answered
+            const allAnswered = gameState.userResponses.every(response => response !== -1);
+            document.getElementById('submitReadingBtn').disabled = !allAnswered;
+            
+            if (allAnswered) {
+                announceToScreenReader("All questions answered. Click Submit Answers to continue.");
+            }
+        }
+
+        function submitReadingAnswers() {
+            const responseTime = Date.now() - gameState.responseStartTime;
+            const questions = gameState.gameData.questions;
+            let correctCount = 0;
+            
+            // Grade answers
+            questions.forEach((q, index) => {
+                if (gameState.userResponses[index] === q.correct) {
+                    correctCount++;
+                }
+            });
+            
+            const accuracy = Math.round((correctCount / questions.length) * 100);
+            
+            gameState.totalAttempts++;
+            if (accuracy >= 70) { // 70% threshold for maintaining streak
+                gameState.correctAnswers++;
+                gameState.streak++;
+            } else {
+                gameState.streak = 0;
+            }
+            
+            updateAccuracy();
+            
+            // Calculate score
+            const points = calculateScore(accuracy, responseTime / 1000, gameState.streak);
+            gameState.score += points;
+            
+            // Show feedback
+            showReadingFeedback(correctCount, questions.length, points);
+            
+            // Update display
+            updateGameStats();
+            
+            // Track interaction
+            gameState.lastInteractionTime = Date.now();
+            
+            // Generate next challenge after delay
+            setTimeout(() => {
+                if (gameState.isActive && !gameState.isPaused) {
+                    generateNextReadingChallenge();
+                }
+            }, 3000);
+        }
+
+        function showReadingFeedback(correct, total, points) {
+            const accuracy = Math.round((correct / total) * 100);
+            const message = `You answered ${correct}/${total} questions correctly (${accuracy}%). You earned ${points} points.`;
+            
+            announceToScreenReader(message);
+            showPointsAnimation(points);
+        }
+
+        // Math Mode
+        function initializeMathMode() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <div class="instruction-area">
+                    <h3>Mental Math Training</h3>
+                    <p>Solve the math problems as quickly and accurately as possible.</p>
+                </div>
+                
+                <div id="mathContent">
+                    <!-- Content will be populated dynamically -->
+                </div>
+            `;
+            
+            generateNextMathProblem();
+        }
+
+        function generateMathProblem(level) {
+            const complexity = levelConfig.getMathComplexity(level);
+            let problem, answer;
+            
+            switch (complexity) {
+                case 'simple':
+                    // Single operations
+                    const a = Math.floor(Math.random() * 50) + 10;
+                    const b = Math.floor(Math.random() * 30) + 5;
+                    const op = ['+', '-', '×'][Math.floor(Math.random() * 3)];
+                    
+                    switch (op) {
+                        case '+':
+                            problem = `${a} + ${b}`;
+                            answer = a + b;
+                            break;
+                        case '-':
+                            problem = `${a} - ${b}`;
+                            answer = a - b;
+                            break;
+                        case '×':
+                            problem = `${a} × ${b}`;
+                            answer = a * b;
+                            break;
+                    }
+                    break;
+                    
+                case 'medium':
+                    // Two operations
+                    const x = Math.floor(Math.random() * 25) + 10;
+                    const y = Math.floor(Math.random() * 15) + 5;
+                    const z = Math.floor(Math.random() * 20) + 5;
+                    const op1 = ['+', '-', '×'][Math.floor(Math.random() * 3)];
+                    const op2 = ['+', '-'][Math.floor(Math.random() * 2)];
+                    
+                    let intermediate;
+                    switch (op1) {
+                        case '+':
+                            intermediate = x + y;
+                            break;
+                        case '-':
+                            intermediate = x - y;
+                            break;
+                        case '×':
+                            intermediate = x * y;
+                            break;
+                    }
+                    
+                    problem = `${x} ${op1} ${y} ${op2} ${z}`;
+                    answer = op2 === '+' ? intermediate + z : intermediate - z;
+                    break;
+                    
+                case 'complex':
+                    // Three operations with parentheses
+                    const p = Math.floor(Math.random() * 15) + 5;
+                    const q = Math.floor(Math.random() * 10) + 3;
+                    const r = Math.floor(Math.random() * 8) + 2;
+                    const s = Math.floor(Math.random() * 12) + 4;
+                    
+                    problem = `(${p} + ${q}) × ${r} - ${s}`;
+                    answer = (p + q) * r - s;
+                    break;
+                    
+                case 'advanced':
+                    // Multi-step problems
+                    const m = Math.floor(Math.random() * 12) + 8;
+                    const n = Math.floor(Math.random() * 8) + 3;
+                    const o = Math.floor(Math.random() * 6) + 2;
+                    
+                    problem = `${m} × ${n} + ${m} × ${o}`;
+                    answer = m * n + m * o;
+                    break;
+            }
+            
+            return { problem, answer };
+        }
+
+        function generateNextMathProblem() {
+            gameState.currentProblem = generateMathProblem(gameState.currentLevel);
+            gameState.responseStartTime = Date.now();
+            
+            const mathContent = document.getElementById('mathContent');
+            mathContent.innerHTML = `
+                <div class="math-problem">${gameState.currentProblem.problem} = ?</div>
+                <input type="number" class="math-input" id="mathInput" placeholder="Enter answer" autocomplete="off">
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="submitMathBtn">Submit Answer</button>
+                </div>
+                <div id="mathTimer">Time: <span id="mathTimeElapsed">0</span>s</div>
+            `;
+            
+            const mathInput = document.getElementById('mathInput');
+            mathInput.focus();
+            
+            // Start timer display
+            const startTime = Date.now();
+            const timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const timerElement = document.getElementById('mathTimeElapsed');
+                if (timerElement) {
+                    timerElement.textContent = elapsed;
+                } else {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+            
+            // Event listeners
+            mathInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    submitMathAnswer();
+                }
+            });
+            
+            document.getElementById('submitMathBtn').addEventListener('click', submitMathAnswer);
+        }
+
+        function submitMathAnswer() {
+            const userAnswer = parseFloat(document.getElementById('mathInput').value);
+            const correctAnswer = gameState.currentProblem.answer;
+            const responseTime = Date.now() - gameState.responseStartTime;
+            
+            if (isNaN(userAnswer)) {
+                announceToScreenReader("Please enter a valid number.");
+                return;
+            }
+            
+            // Allow 2% margin for rounding
+            const isCorrect = validateMathAnswer(userAnswer, correctAnswer);
+            
+            gameState.totalAttempts++;
+            if (isCorrect) {
+                gameState.correctAnswers++;
+                gameState.streak++;
+            } else {
+                gameState.streak = 0;
+            }
+            
+            updateAccuracy();
+            
+            // Calculate score with time bonus
+            const accuracy = isCorrect ? 100 : 0;
+            const points = calculateScore(accuracy, responseTime / 1000, gameState.streak);
+            gameState.score += points;
+            
+            // Show feedback
+            showMathFeedback(isCorrect, correctAnswer, responseTime, points);
+            
+            // Update display
+            updateGameStats();
+            
+            // Track interaction
+            gameState.lastInteractionTime = Date.now();
+            
+            // Generate next problem after delay
+            setTimeout(() => {
+                if (gameState.isActive && !gameState.isPaused) {
+                    generateNextMathProblem();
+                }
+            }, 2500);
+        }
+
+        function validateMathAnswer(userAnswer, correctAnswer) {
+            const margin = Math.abs(correctAnswer * 0.02); // 2% margin
+            return Math.abs(userAnswer - correctAnswer) <= margin;
+        }
+
+        function showMathFeedback(isCorrect, correctAnswer, responseTime, points) {
+            const mathInput = document.getElementById('mathInput');
+            const className = isCorrect ? 'correct-feedback' : 'incorrect-feedback';
+            
+            mathInput.classList.add(className);
+            
+            setTimeout(() => {
+                mathInput.classList.remove(className);
+            }, 1000);
+            
+            const timeInSeconds = (responseTime / 1000).toFixed(1);
+            const message = isCorrect ? 
+                `Correct! Solved in ${timeInSeconds} seconds. You earned ${points} points.` :
+                `Incorrect. The answer was ${correctAnswer}. You earned ${points} points.`;
+                
+            announceToScreenReader(message);
+            showPointsAnimation(points);
+        }
+
+        // Pattern Recognition Mode
+        function initializePatternMode() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <div class="instruction-area">
+                    <h3>Pattern Recognition Training</h3>
+                    <p>Study the pattern and select the missing element from the options below.</p>
+                </div>
+                
+                <div id="patternContent">
+                    <!-- Content will be populated dynamically -->
+                </div>
+            `;
+            
+            generateNextPatternChallenge();
+        }
+
+        function generatePatternGrid(level) {
+            const patterns = {
+                simple: [
+                    // Color patterns
+                    {
+                        grid: ['🔴', '🔵', '🔴', '🔵', '🔴', '🔵', '🔴', '?'],
+                        options: ['🔵', '🔴', '🟡', '🟢'],
+                        correct: 0,
+                        missing: 7
+                    },
+                    {
+                        grid: ['🟡', '🟡', '🔵', '🟡', '🟡', '🔵', '🟡', '?'],
+                        options: ['🟡', '🔵', '🔴', '🟢'],
+                        correct: 1,
+                        missing: 7
+                    }
+                ],
+                medium: [
+                    // Shape and color combinations
+                    {
+                        grid: ['⭐', '⭐', '🔺', '⭐', '⭐', '🔺', '⭐', '?'],
+                        options: ['⭐', '🔺', '🔴', '🟡'],
+                        correct: 1,
+                        missing: 7
+                    },
+                    {
+                        grid: ['🔴', '🔵', '🟡', '🔴', '🔵', '🟡', '🔴', '?'],
+                        options: ['🔴', '🔵', '🟡', '🟢'],
+                        correct: 1,
+                        missing: 7
+                    }
+                ],
+                complex: [
+                    // Complex geometric relationships
+                    {
+                        grid: ['🔺', '🔺', '🔴', '🔴', '🔺', '🔺', '🔴', '?'],
+                        options: ['🔺', '🔴', '🟡', '🔵'],
+                        correct: 1,
+                        missing: 7
+                    }
+                ]
+            };
+            
+            let patternType;
+            if (level <= 3) patternType = 'simple';
+            else if (level <= 6) patternType = 'medium';
+            else patternType = 'complex';
+            
+            const availablePatterns = patterns[patternType];
+            return availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
+        }
+
+        function generateNextPatternChallenge() {
+            gameState.currentPattern = generatePatternGrid(gameState.currentLevel);
+            gameState.responseStartTime = Date.now();
+            
+            const patternContent = document.getElementById('patternContent');
+            patternContent.innerHTML = `
+                <div class="pattern-grid" id="patternGrid">
+                    ${gameState.currentPattern.grid.map((item, index) => `
+                        <div class="pattern-cell ${item === '?' ? 'missing' : ''}" data-index="${index}">
+                            ${item === '?' ? '' : item}
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="pattern-options" id="patternOptions">
+                    ${gameState.currentPattern.options.map((option, index) => `
+                        <div class="pattern-option" data-option="${index}" tabindex="0" role="button" aria-label="Option ${index + 1}: ${option}">
+                            ${option}
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="submitPatternBtn" disabled>Submit Answer</button>
+                </div>
+            `;
+            
+            // Add event listeners
+            document.querySelectorAll('.pattern-option').forEach(option => {
+                option.addEventListener('click', handlePatternOptionClick);
+            });
+            
+            document.getElementById('submitPatternBtn').addEventListener('click', submitPatternAnswer);
+        }
+
+        function handlePatternOptionClick(event) {
+            // Remove previous selection
+            document.querySelectorAll('.pattern-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select new option
+            event.target.classList.add('selected');
+            gameState.selectedPatternOption = parseInt(event.target.dataset.option);
+            
+            document.getElementById('submitPatternBtn').disabled = false;
+            
+            // Update missing cell preview
+            const missingCell = document.querySelector('.pattern-cell.missing');
+            missingCell.textContent = gameState.currentPattern.options[gameState.selectedPatternOption];
+            missingCell.style.opacity = '0.7';
+        }
+
+        function submitPatternAnswer() {
+            const responseTime = Date.now() - gameState.responseStartTime;
+            const isCorrect = gameState.selectedPatternOption === gameState.currentPattern.correct;
+            
+            gameState.totalAttempts++;
+            if (isCorrect) {
+                gameState.correctAnswers++;
+                gameState.streak++;
+            } else {
+                gameState.streak = 0;
+            }
+            
+            updateAccuracy();
+            
+            // Calculate score
+            const accuracy = isCorrect ? 100 : 0;
+            const points = calculateScore(accuracy, responseTime / 1000, gameState.streak);
+            gameState.score += points;
+            
+            // Show feedback
+            showPatternFeedback(isCorrect, points);
+            
+            // Update display
+            updateGameStats();
+            
+            // Track interaction
+            gameState.lastInteractionTime = Date.now();
+            
+            // Generate next challenge after delay
+            setTimeout(() => {
+                if (gameState.isActive && !gameState.isPaused) {
+                    generateNextPatternChallenge();
+                }
+            }, 2500);
+        }
+
+        function showPatternFeedback(isCorrect, points) {
+            const selectedOption = document.querySelector('.pattern-option.selected');
+            const missingCell = document.querySelector('.pattern-cell.missing');
+            
+            const className = isCorrect ? 'correct-feedback' : 'incorrect-feedback';
+            selectedOption.classList.add(className);
+            missingCell.classList.add(className);
+            
+            setTimeout(() => {
+                selectedOption.classList.remove(className);
+                missingCell.classList.remove(className);
+            }, 1000);
+            
+            const message = isCorrect ? 
+                `Correct pattern! You earned ${points} points.` :
+                `Incorrect. The correct answer was option ${gameState.currentPattern.correct + 1}. You earned ${points} points.`;
+                
+            announceToScreenReader(message);
+            showPointsAnimation(points);
+        }
+
+        // Sustained Focus Mode
+        function initializeFocusMode() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <div class="instruction-area">
+                    <h3>Sustained Focus Training</h3>
+                    <p>Click on the GREEN targets (✓) and avoid the RED distractors (✗). Track moving objects carefully!</p>
+                </div>
+                
+                <div class="focus-arena" id="focusArena">
+                    <!-- Moving objects will be added here -->
+                </div>
+                
+                <div id="focusStats">
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Targets Hit</div>
+                            <div class="stat-value" id="targetsHit">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Distractors Avoided</div>
+                            <div class="stat-value" id="distractorsAvoided">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Focus Accuracy</div>
+                            <div class="stat-value" id="focusAccuracy">100%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            gameState.focusStats = {
+                targetsHit: 0,
+                targetsMissed: 0,
+                distractorsHit: 0,
+                distractorsAvoided: 0
+            };
+            
+            startFocusChallenge();
+        }
+
+        function createFocusChallenge(level) {
+            const difficulty = levelConfig.getFocusDifficulty(level);
+            const arena = document.getElementById('focusArena');
+            const arenaRect = arena.getBoundingClientRect();
+            
+            // Clear existing objects
+            gameState.focusObjects = [];
+            arena.innerHTML = '';
+            
+            // Create target objects
+            for (let i = 0; i < difficulty.targetCount; i++) {
+                createFocusObject('target', arenaRect, difficulty.speed);
+            }
+            
+            // Create distractor objects
+            for (let i = 0; i < difficulty.distractorCount; i++) {
+                createFocusObject('distractor', arenaRect, difficulty.speed);
+            }
+        }
+
+        function createFocusObject(type, arenaRect, speed) {
+            const arena = document.getElementById('focusArena');
+            const object = document.createElement('div');
+            
+            object.className = `focus-object ${type}`;
+            object.textContent = type === 'target' ? '✓' : '✗';
+            
+            const size = 40 + Math.random() * 20; // 40-60px
+            object.style.width = size + 'px';
+            object.style.height = size + 'px';
+            object.style.fontSize = (size * 0.4) + 'px';
+            
+            // Random starting position
+            object.style.left = Math.random() * (arenaRect.width - size) + 'px';
+            object.style.top = Math.random() * (arenaRect.height - size) + 'px';
+            
+            // Random movement direction
+            const angle = Math.random() * 2 * Math.PI;
+            const velocity = {
+                x: Math.cos(angle) * speed,
+                y: Math.sin(angle) * speed
+            };
+            
+            object.addEventListener('click', () => handleFocusObjectClick(object, type));
+            
+            arena.appendChild(object);
+            
+            gameState.focusObjects.push({
+                element: object,
+                type: type,
+                velocity: velocity,
+                size: size,
+                clicked: false
+            });
+        }
+
+        function startFocusChallenge() {
+            createFocusChallenge(gameState.currentLevel);
+            gameState.responseStartTime = Date.now();
+            
+            // Start animation loop
+            animateFocusObjects();
+            
+            // Spawn new objects periodically
+            gameState.spawnInterval = setInterval(() => {
+                if (gameState.isActive && !gameState.isPaused) {
+                    spawnRandomFocusObject();
+                }
+            }, 3000 + Math.random() * 2000); // Every 3-5 seconds
+        }
+
+        function animateFocusObjects() {
+            const arena = document.getElementById('focusArena');
+            const arenaRect = arena.getBoundingClientRect();
+            
+            function animate() {
+                if (!gameState.isActive || gameState.isPaused) {
+                    return;
+                }
+                
+                gameState.focusObjects.forEach(obj => {
+                    const element = obj.element;
+                    if (!element.parentNode) return;
+                    
+                    const currentLeft = parseFloat(element.style.left);
+                    const currentTop = parseFloat(element.style.top);
+                    
+                    let newLeft = currentLeft + obj.velocity.x;
+                    let newTop = currentTop + obj.velocity.y;
+                    
+                    // Bounce off walls
+                    if (newLeft <= 0 || newLeft >= arenaRect.width - obj.size) {
+                        obj.velocity.x = -obj.velocity.x;
+                        newLeft = Math.max(0, Math.min(arenaRect.width - obj.size, newLeft));
+                    }
+                    
+                    if (newTop <= 0 || newTop >= arenaRect.height - obj.size) {
+                        obj.velocity.y = -obj.velocity.y;
+                        newTop = Math.max(0, Math.min(arenaRect.height - obj.size, newTop));
+                    }
+                    
+                    element.style.left = newLeft + 'px';
+                    element.style.top = newTop + 'px';
+                });
+                
+                gameState.animationId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+
+        function handleFocusObjectClick(element, type) {
+            const object = gameState.focusObjects.find(obj => obj.element === element);
+            if (!object || object.clicked) return;
+            
+            object.clicked = true;
+            
+            if (type === 'target') {
+                gameState.focusStats.targetsHit++;
+                element.classList.add('correct-feedback');
+                showPointsAnimation(50);
+                gameState.score += 50;
+            } else {
+                gameState.focusStats.distractorsHit++;
+                element.classList.add('incorrect-feedback');
+                gameState.streak = 0; // Reset streak for hitting distractors
+            }
+            
+            // Remove object after brief delay
+            setTimeout(() => {
+                if (element.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+                const index = gameState.focusObjects.indexOf(object);
+                if (index > -1) {
+                    gameState.focusObjects.splice(index, 1);
+                }
+            }, 500);
+            
+            updateFocusStats();
+            updateGameStats();
+            gameState.lastInteractionTime = Date.now();
+        }
+
+        function spawnRandomFocusObject() {
+            const arena = document.getElementById('focusArena');
+            const arenaRect = arena.getBoundingClientRect();
+            const difficulty = levelConfig.getFocusDifficulty(gameState.currentLevel);
+            
+            const type = Math.random() < 0.4 ? 'target' : 'distractor'; // 40% targets, 60% distractors
+            createFocusObject(type, arenaRect, difficulty.speed);
+        }
+
+        function updateFocusStats() {
+            document.getElementById('targetsHit').textContent = gameState.focusStats.targetsHit;
+            
+            const totalDistractors = gameState.focusStats.distractorsHit + gameState.focusStats.distractorsAvoided;
+            document.getElementById('distractorsAvoided').textContent = totalDistractors - gameState.focusStats.distractorsHit;
+            
+            const totalClicks = gameState.focusStats.targetsHit + gameState.focusStats.distractorsHit;
+            const accuracy = totalClicks > 0 ? Math.round((gameState.focusStats.targetsHit / totalClicks) * 100) : 100;
+            document.getElementById('focusAccuracy').textContent = accuracy + '%';
+        }
+
+        // Scoring and Progression System
+        function calculateScore(accuracy, responseTime, streak) {
+            const basePoints = Math.round(accuracy * 100 / 100); // Scale base points
+            const timeBonus = Math.max(0, 50 - Math.min(responseTime, 50)); // Max 50 bonus points
+            const streakMultiplier = Math.min(2.0, 1 + (streak * 0.1));
+            
+            return Math.round((basePoints + timeBonus) * streakMultiplier);
+        }
+
+        function updateAccuracy() {
+            if (gameState.totalAttempts > 0) {
+                gameState.accuracy = Math.round((gameState.correctAnswers / gameState.totalAttempts) * 100);
+            }
+        }
+
+        function checkLevelUnlock() {
+            const currentLevelComplete = 
+                gameState.accuracy >= 75 && 
+                gameState.attentionLapses <= 3 &&
+                gameState.totalAttempts >= 3; // Minimum attempts to qualify
+            
+            if (currentLevelComplete && !gameState.unlockedLevels.includes(gameState.currentLevel + 1)) {
+                gameState.unlockedLevels.push(gameState.currentLevel + 1);
+                return gameState.currentLevel + 1;
+            }
+            
+            return null;
+        }
+
+        // Timer and Session Management
+        function updateTimeDisplay(remaining) {
+            document.getElementById('timeRemaining').textContent = formatTime(remaining);
+            
+            // Warning for low time
+            if (remaining <= 30 && remaining > 0) {
+                document.getElementById('timeRemaining').style.color = '#f44336';
+            }
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function completeSession() {
+            gameState.isActive = false;
+            gameState.endTime = Date.now();
+            
+            // Stop focus mode animation
+            if (gameState.animationId) {
+                cancelAnimationFrame(gameState.animationId);
+            }
+            
+            // Clear intervals
+            if (gameState.spawnInterval) {
+                clearInterval(gameState.spawnInterval);
+            }
+            
+            // Check for level unlock
+            const unlockedLevel = checkLevelUnlock();
+            
+            // Show completion screen
+            showCompletionScreen(unlockedLevel);
+        }
+
+        // Attention Lapse Detection
+        function trackUserEngagement() {
+            let lastActivity = Date.now();
+            let consecutiveIncorrect = 0;
+            
+            // Track mouse/keyboard activity
+            ['mousedown', 'keydown', 'touchstart'].forEach(event => {
+                document.addEventListener(event, () => {
+                    lastActivity = Date.now();
+                });
+            });
+            
+            // Check for attention lapses every 5 seconds
+            setInterval(() => {
+                if (!gameState.isActive || gameState.isPaused) return;
+                
+                const timeSinceActivity = Date.now() - lastActivity;
+                const timeSinceInteraction = Date.now() - (gameState.lastInteractionTime || Date.now());
+                
+                // Detect attention lapses
+                if (timeSinceInteraction > 15000) { // 15+ seconds without interaction
+                    gameState.attentionLapses++;
+                    announceToScreenReader("Attention lapse detected. Stay focused on the task.");
+                    gameState.lastInteractionTime = Date.now(); // Reset to prevent repeated alerts
+                }
+                
+                // Track consecutive incorrect answers
+                // This would be implemented per game mode based on recent responses
+            }, 5000);
+        }
+
+        function handleVisibilityChange() {
+            if (document.hidden && gameState.isActive && !gameState.isPaused) {
+                pauseGame();
+                announceToScreenReader("Game paused due to tab switch. Click Resume when ready to continue.");
+            }
+        }
+
+        // Game Controls
+        function pauseGame() {
+            if (!gameState.isActive) return;
+            
+            gameState.isPaused = true;
+            
+            if (sessionTimer) {
+                sessionTimer.pause();
+            }
+            
+            // Stop focus mode animation
+            if (gameState.animationId) {
+                cancelAnimationFrame(gameState.animationId);
+            }
+            
+            showScreen('pauseScreen');
+            announceToScreenReader("Game paused");
+        }
+
+        function resumeGame() {
+            if (!gameState.isActive || !gameState.isPaused) return;
+            
+            gameState.isPaused = false;
+            
+            if (sessionTimer) {
+                sessionTimer.resume();
+            }
+            
+            // Restart focus mode animation if needed
+            if (gameState.currentGameMode === 'focus') {
+                animateFocusObjects();
+            }
+            
+            showScreen('gameContainer');
+            announceToScreenReader("Game resumed");
+        }
+
+        function quitToMenu() {
+            cleanupGameResources();
+            showScreen('startScreen');
+            announceToScreenReader("Returned to main menu");
+        }
+
+        // Screen Management
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // Completion Screen
+        function showCompletionScreen(unlockedLevel) {
+            const completionScreen = document.getElementById('completionScreen');
+            const sessionDuration = (gameState.endTime - gameState.startTime) / 1000;
+            
+            // Update title and message
+            document.getElementById('completionTitle').textContent = 
+                unlockedLevel ? '🎉 Level Complete! New Level Unlocked!' : '✅ Session Complete!';
+            
+            document.getElementById('completionMessage').textContent = 
+                unlockedLevel ? 
+                `Excellent work! You've unlocked Level ${unlockedLevel}. Your focus and accuracy have improved significantly.` :
+                'Great effort in this training session. Keep practicing to improve your sustained attention.';
+            
+            // Update results
+            const resultsGrid = document.getElementById('resultsGrid');
+            resultsGrid.innerHTML = `
+                <div class="result-item">
+                    <div class="result-value">${gameState.score}</div>
+                    <div class="result-label">Total Score</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${gameState.accuracy}%</div>
+                    <div class="result-label">Accuracy</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${gameState.streak}</div>
+                    <div class="result-label">Best Streak</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${gameState.attentionLapses}</div>
+                    <div class="result-label">Attention Lapses</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${Math.round(sessionDuration / 60)}:${String(Math.round(sessionDuration % 60)).padStart(2, '0')}</div>
+                    <div class="result-label">Session Time</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${gameState.totalAttempts}</div>
+                    <div class="result-label">Total Attempts</div>
+                </div>
+            `;
+            
+            // Update progress bar
+            const progress = (gameState.currentLevel / 20) * 100; // Assuming 20 levels max
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `Level ${gameState.currentLevel} of 20 Complete`;
+            
+            // Update button states
+            document.getElementById('nextLevelBtn').disabled = !unlockedLevel;
+            
+            showScreen('completionScreen');
+            
+            // Generate level buttons in case new level was unlocked
+            generateLevelButtons();
+        }
+
+        // Navigation Functions
+        function startNextLevel() {
+            if (gameState.currentLevel < 20) {
+                gameState.currentLevel++;
+                updateSessionDuration();
+                startGameSession();
+            }
+        }
+
+        function playAgain() {
+            startGameSession();
+        }
+
+        function backToMenu() {
+            showScreen('startScreen');
+        }
+
+        // Utility Functions
+        function updateGameStats() {
+            document.getElementById('currentLevel').textContent = gameState.currentLevel;
+            document.getElementById('currentScore').textContent = gameState.score;
+            document.getElementById('currentStreak').textContent = gameState.streak;
+            document.getElementById('currentAccuracy').textContent = gameState.accuracy + '%';
+        }
+
+        function showPointsAnimation(points) {
+            const gameArea = document.getElementById('gameArea');
+            const pointsElement = document.createElement('div');
+            
+            pointsElement.textContent = `+${points}`;
+            pointsElement.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 2em;
+                font-weight: bold;
+                color: #4CAF50;
+                pointer-events: none;
+                z-index: 1000;
+                animation: pointsFloat 2s ease-out forwards;
+            `;
+            
+            // Add floating animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pointsFloat {
+                    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    50% { opacity: 1; transform: translate(-50%, -70%) scale(1.2); }
+                    100% { opacity: 0; transform: translate(-50%, -90%) scale(0.8); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            gameArea.appendChild(pointsElement);
+            
+            setTimeout(() => {
+                if (pointsElement.parentNode) {
+                    pointsElement.parentNode.removeChild(pointsElement);
+                }
+                document.head.removeChild(style);
+            }, 2000);
+        }
+
+        function announceToScreenReader(message) {
+            const liveRegion = document.getElementById('ariaLive');
+            liveRegion.textContent = message;
+            
+            // Clear after announcement
+            setTimeout(() => {
+                liveRegion.textContent = '';
+            }, 1000);
+        }
+
+        function alertScreenReader(message) {
+            const alertRegion = document.getElementById('ariaAlert');
+            alertRegion.textContent = message;
+            
+            setTimeout(() => {
+                alertRegion.textContent = '';
+            }, 1000);
+        }
+
+        // Keyboard Navigation
+        function handleKeyboardNavigation(event) {
+            if (event.key === 'Escape') {
+                if (gameState.isActive && !gameState.isPaused) {
+                    pauseGame();
+                } else if (gameState.isPaused) {
+                    resumeGame();
+                }
+            }
+            
+            // Number keys for quick level selection on start screen
+            if (!document.getElementById('startScreen').classList.contains('hidden')) {
+                const num = parseInt(event.key);
+                if (num >= 1 && num <= 9 && gameState.unlockedLevels.includes(num)) {
+                    const levelBtn = document.querySelector(`[data-level="${num}"]`);
+                    if (levelBtn) {
+                        levelBtn.click();
+                    }
+                }
+            }
+            
+            // Space bar for primary actions
+            if (event.key === ' ') {
+                const activeElement = document.activeElement;
+                if (activeElement && activeElement.tagName === 'BUTTON') {
+                    event.preventDefault();
+                    activeElement.click();
+                }
+            }
+        }
+
+        // Help System
+        function showHelp() {
+            const helpText = {
+                memory: "Memory Sequence: Watch the colored buttons light up in sequence, then click them in the same order. Sequences get longer as you progress.",
+                speed: "Speed Reading: Read the passage within the time limit, then answer comprehension questions. Longer passages and more questions at higher levels.",
+                math: "Mental Math: Solve arithmetic problems as quickly and accurately as possible. Problems become more complex with multiple operations.",
+                pattern: "Pattern Recognition: Study the visual pattern and identify the missing element. Patterns involve colors, shapes, and geometric relationships.",
+                focus: "Sustained Focus: Click on green targets (✓) while avoiding red distractors (✗). Objects move faster and increase in number at higher levels."
+            };
+            
+            const currentHelp = helpText[gameState.currentGameMode] || "Select a game mode to see specific instructions.";
+            alertScreenReader(`Help: ${currentHelp}`);
+        }
+
+        // Cleanup
+        function cleanupGameResources() {
+            gameState.isActive = false;
+            gameState.isPaused = false;
+            
+            // Clear timers
+            if (sessionTimer) {
+                sessionTimer.complete();
+                sessionTimer = null;
+            }
+            
+            // Clear intervals
+            if (gameState.spawnInterval) {
+                clearInterval(gameState.spawnInterval);
+                gameState.spawnInterval = null;
+            }
+            
+            // Cancel animation frames
+            if (gameState.animationId) {
+                cancelAnimationFrame(gameState.animationId);
+                gameState.animationId = null;
+            }
+            
+            // Reset game state
+            gameState.focusObjects = [];
+            gameState.currentSequence = [];
+            gameState.userSequence = [];
+            gameState.gameData = null;
+            gameState.currentProblem = null;
+            gameState.currentPattern = null;
+        }
+
+        // Performance Monitoring
+        function monitorPerformance() {
+            // Monitor frame rate for smooth animations
+            let lastTime = performance.now();
+            let frameCount = 0;
+            
+            function checkFrameRate() {
+                const currentTime = performance.now();
+                frameCount++;
+                
+                if (currentTime - lastTime >= 1000) {
+                    const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                    
+                    if (fps < 30 && gameState.isActive) {
+                        console.warn('Low frame rate detected:', fps, 'fps');
+                        // Could implement quality reduction here if needed
+                    }
+                    
+                    frameCount = 0;
+                    lastTime = currentTime;
+                }
+                
+                requestAnimationFrame(checkFrameRate);
+            }
+            
+            checkFrameRate();
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeGame();
+            monitorPerformance();
+            
+            // Announce initial state to screen readers
+            announceToScreenReader("Attention Training Game loaded. Select a level and game mode to begin your training session.");
+        });
+
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            cleanupGameResources();
+        });
+    </script>
+</body>
+</html>
